@@ -81,16 +81,21 @@ def make_move():
     else:
         placed_O.append(index)
 
-    # Check win BEFORE vanishing
-    winner = check_win()
-    if winner:
-        log_move(None, f"{winner} wins")
-        response = {"status": "win", "winner": winner, "board": board, "vanished": None}
-        game_id += 1
-        reset_game()
-        return jsonify(response)
+    # Decide whether this is the 4th piece or not
+    is_fourth = (current_player == "X" and len(placed_X) > 3) or \
+                (current_player == "O" and len(placed_O) > 3)
 
-    # Vanish oldest if queue > 3
+    if not is_fourth:
+        # Less than 4 pieces — check win immediately, no vanishing needed
+        winner = check_win()
+        if winner:
+            log_move(None, f"{winner} wins")
+            response = {"status": "win", "winner": winner, "board": board, "vanished": None, "placed_X": placed_X, "placed_O": placed_O}
+            game_id += 1
+            reset_game()
+            return jsonify(response)
+
+    # 4th piece — vanish oldest FIRST
     vanished = None
     if current_player == "X" and len(placed_X) > 3:
         vanished = placed_X.pop(0)
@@ -99,11 +104,11 @@ def make_move():
         vanished = placed_O.pop(0)
         board[vanished] = ""
 
-    # Check win AFTER vanishing
+    # Now check win AFTER vanishing
     winner = check_win()
     if winner:
         log_move(vanished, f"{winner} wins")
-        response = {"status": "win", "winner": winner, "board": board, "vanished": vanished}
+        response = {"status": "win", "winner": winner, "board": board, "vanished": vanished, "placed_X": placed_X, "placed_O": placed_O}
         game_id += 1
         reset_game()
         return jsonify(response)
@@ -111,7 +116,7 @@ def make_move():
     # Check draw
     if check_draw():
         log_move(vanished, "draw")
-        response = {"status": "draw", "board": board, "vanished": vanished}
+        response = {"status": "draw", "board": board, "vanished": vanished, "placed_X": placed_X, "placed_O": placed_O}
         game_id += 1
         reset_game()
         return jsonify(response)
