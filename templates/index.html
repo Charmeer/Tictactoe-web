@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        #status {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        #board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 8px;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            font-size: 2.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: white;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+
+        .cell:hover {
+            background-color: #e8e8e8;
+        }
+
+        .cell.x {
+            color: blue;
+        }
+
+        .cell.o {
+            color: red;
+        }
+
+        .cell.warn-x {
+            background-color: #cce5ff;
+        }
+
+        .cell.warn-o {
+            background-color: #ffe5e5;
+        }
+
+        #new-game {
+            margin-top: 25px;
+            padding: 10px 30px;
+            font-size: 1rem;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        #new-game:hover {
+            background-color: #45a049;
+        }
+
+        #counter {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Tic Tac Toe</h1>
+    <div id="status">Player X's turn</div>
+
+    <div id="board">
+        <div class="cell" onclick="makeMove(0)"></div>
+        <div class="cell" onclick="makeMove(1)"></div>
+        <div class="cell" onclick="makeMove(2)"></div>
+        <div class="cell" onclick="makeMove(3)"></div>
+        <div class="cell" onclick="makeMove(4)"></div>
+        <div class="cell" onclick="makeMove(5)"></div>
+        <div class="cell" onclick="makeMove(6)"></div>
+        <div class="cell" onclick="makeMove(7)"></div>
+        <div class="cell" onclick="makeMove(8)"></div>
+    </div>
+
+    <button id="new-game" onclick="newGame()">New Game</button>
+    <div id="counter">Games played: 0</div>
+
+    <script>
+        let gamesPlayed = 0;
+
+        function renderBoard(board, placedX, placedO) {
+            const cells = document.querySelectorAll(".cell");
+            cells.forEach((cell, i) => {
+                // Set text
+                cell.textContent = board[i];
+
+                // Reset classes
+                cell.className = "cell";
+
+                // Color X and O
+                if (board[i] === "X") cell.classList.add("x");
+                if (board[i] === "O") cell.classList.add("o");
+
+                // Warn oldest X piece (about to vanish)
+                if (placedX.length === 3 && i === placedX[0]) {
+                    cell.classList.add("warn-x");
+                }
+
+                // Warn oldest O piece (about to vanish)
+                if (placedO.length === 3 && i === placedO[0]) {
+                    cell.classList.add("warn-o");
+                }
+            });
+        }
+
+        async function makeMove(index) {
+            const response = await fetch("/move", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ index: index })
+            });
+
+            const data = await response.json();
+
+            if (data.status === "invalid") return;
+
+            renderBoard(
+                data.board,
+                data.placed_X || [],
+                data.placed_O || []
+            );
+
+            if (data.status === "win") {
+                gamesPlayed++;
+                document.getElementById("counter").textContent = `Games played: ${gamesPlayed}`;
+                setTimeout(() => {
+                    alert(`Player ${data.winner} wins! 🎉`);
+                    renderBoard(["","","","","","","","",""], [], []);
+                    document.getElementById("status").textContent = "Player X's turn";
+                }, 100);
+                return;
+            }
+
+            if (data.status === "draw") {
+                gamesPlayed++;
+                document.getElementById("counter").textContent = `Games played: ${gamesPlayed}`;
+                setTimeout(() => {
+                    alert("It's a draw! 🤝");
+                    renderBoard(["","","","","","","","",""], [], []);
+                    document.getElementById("status").textContent = "Player X's turn";
+                }, 100);
+                return;
+            }
+
+            document.getElementById("status").textContent = `Player ${data.current_player}'s turn`;
+        }
+
+        async function newGame() {
+            const response = await fetch("/reset", { method: "POST" });
+            const data = await response.json();
+            renderBoard(["","","","","","","","",""], [], []);
+            document.getElementById("status").textContent = "Player X's turn";
+        }
+    </script>
+
+</body>
+</html>
