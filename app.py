@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 from datetime import datetime
 import os
 
+move_buffer = []  # stores moves during the game
+
 # Load credentials from .env
 load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -34,8 +36,8 @@ def check_win():
 def check_draw():
     return all(cell != "" for cell in board)
 
-def log_move(vanished, result):
-    supabase.table("moves").insert({
+def buffer_move(vanished, result):
+    move_buffer.append({
         "game_id": game_id,
         "date": datetime.now().isoformat(),
         "move_number": move_number,
@@ -44,15 +46,21 @@ def log_move(vanished, result):
         "board_state": ",".join(board),
         "vanished_cell": str(vanished) if vanished is not None else "",
         "result": result
-    }).execute()
+    })
+
+def save_game_to_supabase():
+    if move_buffer:
+        supabase.table("moves").insert(move_buffer).execute()
+        move_buffer.clear()
 
 def reset_game():
-    global board, current_player, placed_X, placed_O, move_number
+    global board, current_player, placed_X, placed_O, move_number, move_buffer
     board = [""] * 9
     current_player = "X"
     placed_X = []
     placed_O = []
     move_number = 0
+    move_buffer = []
 
 @app.route("/")
 def index():
@@ -89,7 +97,8 @@ def make_move():
         # Less than 4 pieces — check win immediately, no vanishing needed
         winner = check_win()
         if winner:
-            log_move(None, f"{winner} wins")
+            buffer_move(None, f"{winner} wins")      # ← changed
+            save_game_to_supabase()                  # ← added
             response = {"status": "win", "winner": winner, "board": board, "vanished": None, "placed_X": placed_X, "placed_O": placed_O}
             game_id += 1
             reset_game()
@@ -107,7 +116,8 @@ def make_move():
     # Now check win AFTER vanishing
     winner = check_win()
     if winner:
-        log_move(vanished, f"{winner} wins")
+        buffer_move(vanished, f"{winner} wins")      # ← changed
+        save_game_to_supabase()                      # ← added
         response = {"status": "win", "winner": winner, "board": board, "vanished": vanished, "placed_X": placed_X, "placed_O": placed_O}
         game_id += 1
         reset_game()
@@ -115,14 +125,15 @@ def make_move():
 
     # Check draw
     if check_draw():
-        log_move(vanished, "draw")
+        buffer_move(vanished, "draw")                # ← changed
+        save_game_to_supabase()                      # ← added
         response = {"status": "draw", "board": board, "vanished": vanished, "placed_X": placed_X, "placed_O": placed_O}
         game_id += 1
         reset_game()
         return jsonify(response)
 
-    # Ongoing
-    log_move(vanished, "ongoing")
+    # Ongoing — only buffer, don't save yet
+    buffer_move(vanished, "ongoing")                 # ← changed
     current_player = "O" if current_player == "X" else "X"
     return jsonify({
         "status": "ongoing",
