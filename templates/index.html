@@ -1,100 +1,335 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="default">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tic Tac Toe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
+        /* ── THEMES ── */
+        [data-theme="default"] {
+            --bg: #080810; --surface: #0f0f1a; --card: #13131f; --border: #1e1e30;
+            --x: #38bdf8; --x-glow: rgba(56,189,248,0.25);
+            --o: #f472b6; --o-glow: rgba(244,114,182,0.25);
+            --text: #e8e8f0; --muted: #6b6b8a;
+            --orb1: rgba(56,189,248,0.06); --orb2: rgba(244,114,182,0.06);
+            --btn-grad: linear-gradient(135deg, #38bdf8, #818cf8);
+        }
+        [data-theme="cyberpunk"] {
+            --bg: #050a05; --surface: #0a100a; --card: #0d150d; --border: #1a2e1a;
+            --x: #39ff14; --x-glow: rgba(57,255,20,0.25);
+            --o: #ff6a00; --o-glow: rgba(255,106,0,0.25);
+            --text: #e8f0e8; --muted: #5a7a5a;
+            --orb1: rgba(57,255,20,0.05); --orb2: rgba(255,106,0,0.05);
+            --btn-grad: linear-gradient(135deg, #39ff14, #ff6a00);
+        }
+        [data-theme="luxury"] {
+            --bg: #f7f4ee; --surface: #ffffff; --card: #ffffff; --border: #e0d9cc;
+            --x: #c9960c; --x-glow: rgba(201,150,12,0.2);
+            --o: #1a1a1a; --o-glow: rgba(26,26,26,0.15);
+            --text: #1a1a1a; --muted: #9a9080;
+            --orb1: rgba(201,150,12,0.07); --orb2: rgba(26,26,26,0.04);
+            --btn-grad: linear-gradient(135deg, #c9960c, #e8b84b);
+        }
+        [data-theme="synthwave"] {
+            --bg: #0d0015; --surface: #130020; --card: #180028; --border: #2a0045;
+            --x: #bf00ff; --x-glow: rgba(191,0,255,0.25);
+            --o: #00ffe5; --o-glow: rgba(0,255,229,0.25);
+            --text: #f0e8ff; --muted: #7a5a99;
+            --orb1: rgba(191,0,255,0.07); --orb2: rgba(0,255,229,0.07);
+            --btn-grad: linear-gradient(135deg, #bf00ff, #00ffe5);
+        }
+        [data-theme="aggressive"] {
+            --bg: #0a0000; --surface: #110000; --card: #160000; --border: #2e0a0a;
+            --x: #ff1a1a; --x-glow: rgba(255,26,26,0.25);
+            --o: #f0f0f0; --o-glow: rgba(240,240,240,0.15);
+            --text: #f5e8e8; --muted: #7a4a4a;
+            --orb1: rgba(255,26,26,0.07); --orb2: rgba(240,240,240,0.03);
+            --btn-grad: linear-gradient(135deg, #ff1a1a, #880000);
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+
         body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
+            background: var(--bg); color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            overflow: hidden; position: relative;
+            transition: background 0.4s, color 0.4s;
         }
 
-        h1 {
-            font-size: 2rem;
-            margin-bottom: 10px;
+        body::before, body::after {
+            content: ''; position: fixed; border-radius: 50%;
+            filter: blur(100px); pointer-events: none; z-index: 0;
+            animation: drift 12s ease-in-out infinite alternate;
+            transition: background 0.4s;
+        }
+        body::before {
+            width:500px; height:500px;
+            background: radial-gradient(circle, var(--orb1) 0%, transparent 70%);
+            top:-150px; left:-150px;
+        }
+        body::after {
+            width:500px; height:500px;
+            background: radial-gradient(circle, var(--orb2) 0%, transparent 70%);
+            bottom:-150px; right:-150px; animation-delay:-6s;
         }
 
+        @keyframes drift {
+            from { transform:translate(0,0); }
+            to   { transform:translate(60px,40px); }
+        }
+
+        .bg-grid {
+            position:fixed; inset:0;
+            background-image: radial-gradient(circle, rgba(128,128,128,0.05) 1px, transparent 1px);
+            background-size: 32px 32px; pointer-events:none; z-index:0;
+        }
+
+        .wrapper {
+            position:relative; z-index:1;
+            display:flex; flex-direction:column;
+            align-items:center; padding:20px;
+        }
+
+        /* Theme switcher */
+        .theme-bar {
+            display:flex; align-items:center; gap:8px;
+            margin-bottom:20px;
+            animation: slideDown 0.6s cubic-bezier(0.16,1,0.3,1) both;
+        }
+
+        .theme-label {
+            font-size:0.62rem; letter-spacing:0.35em;
+            text-transform:uppercase; color:var(--muted); margin-right:4px;
+        }
+
+        .theme-btn {
+            width:24px; height:24px; border-radius:50%;
+            border:2px solid transparent; cursor:pointer;
+            transition:all 0.2s ease; outline:none;
+        }
+        .theme-btn:hover { transform:scale(1.25); }
+        .theme-btn.active {
+            border-color: var(--text);
+            box-shadow: 0 0 10px rgba(255,255,255,0.25);
+            transform: scale(1.15);
+        }
+        .theme-btn[data-t="default"]    { background: linear-gradient(135deg,#38bdf8,#f472b6); }
+        .theme-btn[data-t="cyberpunk"]  { background: linear-gradient(135deg,#39ff14,#ff6a00); }
+        .theme-btn[data-t="luxury"]     { background: linear-gradient(135deg,#c9960c,#f5e6c0); }
+        .theme-btn[data-t="synthwave"]  { background: linear-gradient(135deg,#bf00ff,#00ffe5); }
+        .theme-btn[data-t="aggressive"] { background: linear-gradient(135deg,#ff1a1a,#444); }
+
+        /* Header */
+        .header {
+            text-align:center; margin-bottom:22px;
+            animation: slideDown 0.6s 0.05s cubic-bezier(0.16,1,0.3,1) both;
+        }
+        .header .eyebrow {
+            font-size:0.62rem; letter-spacing:0.4em;
+            text-transform:uppercase; color:var(--muted); margin-bottom:6px;
+        }
+        .header h1 {
+            font-family:'Bebas Neue',sans-serif;
+            font-size:clamp(2.8rem,8vw,4.5rem);
+            letter-spacing:0.08em; line-height:1;
+            background: var(--btn-grad);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+            background-clip:text; transition: background 0.4s;
+        }
+
+        /* Status pill */
         #status {
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-            font-weight: bold;
+            display:flex; align-items:center; gap:10px;
+            background:var(--card); border:1px solid var(--border);
+            border-radius:99px; padding:8px 20px;
+            font-size:0.85rem; font-weight:500; letter-spacing:0.05em;
+            margin-bottom:22px;
+            animation: slideDown 0.6s 0.1s cubic-bezier(0.16,1,0.3,1) both;
+            transition: background 0.4s, border-color 0.4s;
+        }
+        .dot {
+            width:8px; height:8px; border-radius:50%;
+            background:var(--x); box-shadow:0 0 8px var(--x);
+            animation:pulse 1.5s ease-in-out infinite;
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+        #status.turn-o .dot { background:var(--o); box-shadow:0 0 8px var(--o); }
+
+        @keyframes pulse {
+            0%,100% { opacity:1; transform:scale(1); }
+            50%      { opacity:0.6; transform:scale(0.8); }
         }
 
+        /* Board */
         #board {
-            display: grid;
-            grid-template-columns: repeat(3, 100px);
-            grid-template-rows: repeat(3, 100px);
-            gap: 8px;
+            display:grid;
+            grid-template-columns:repeat(3,1fr);
+            grid-template-rows:repeat(3,1fr);
+            gap:10px; padding:18px;
+            background:var(--card); border:1px solid var(--border);
+            border-radius:20px; box-shadow:0 0 60px rgba(0,0,0,0.4);
+            animation: scaleIn 0.6s 0.2s cubic-bezier(0.16,1,0.3,1) both;
+            transition: background 0.4s, border-color 0.4s;
         }
 
         .cell {
-            width: 100px;
-            height: 100px;
-            font-size: 2.5rem;
-            font-weight: bold;
-            cursor: pointer;
-            background-color: white;
-            border: 2px solid #ccc;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.2s;
+            width:clamp(88px,18vw,110px); height:clamp(88px,18vw,110px);
+            background:var(--surface); border:1px solid var(--border);
+            border-radius:12px; display:flex; align-items:center; justify-content:center;
+            font-family:'Bebas Neue',sans-serif; font-size:clamp(2rem,5vw,2.8rem);
+            cursor:pointer; transition:all 0.18s ease;
         }
-
-        .cell:hover {
-            background-color: #e8e8e8;
-        }
+        .cell:hover { border-color:var(--muted); transform:scale(0.97); }
+        .cell:active { transform:scale(0.93); }
 
         .cell.x {
-            color: blue;
+            color:var(--x); border-color:var(--x-glow);
+            text-shadow:0 0 20px var(--x);
+            background: color-mix(in srgb, var(--x) 6%, var(--surface));
         }
-
         .cell.o {
-            color: red;
+            color:var(--o); border-color:var(--o-glow);
+            text-shadow:0 0 20px var(--o);
+            background: color-mix(in srgb, var(--o) 6%, var(--surface));
         }
-
         .cell.warn-x {
-            background-color: #cce5ff;
+            border-color:var(--x); --pulse-color:var(--x-glow);
+            animation: warnPulse 2s ease-in-out infinite;
+        }
+        .cell.warn-o {
+            border-color:var(--o); --pulse-color:var(--o-glow);
+            animation: warnPulse 2s ease-in-out infinite;
         }
 
-        .cell.warn-o {
-            background-color: #ffe5e5;
+        @keyframes warnPulse {
+            0%,100% { box-shadow:0 0 10px var(--pulse-color); }
+            50%      { box-shadow:0 0 26px var(--pulse-color); }
+        }
+
+        .cell.placed { animation:popIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both; }
+
+        @keyframes popIn {
+            from { transform:scale(0.5); opacity:0; }
+            to   { transform:scale(1); opacity:1; }
+        }
+
+        /* Bottom */
+        .bottom-bar {
+            display:flex; gap:12px; margin-top:20px;
+            animation: slideUp 0.6s 0.3s cubic-bezier(0.16,1,0.3,1) both;
+        }
+
+        .btn {
+            padding:10px 28px; font-family:'DM Sans',sans-serif;
+            font-size:0.85rem; font-weight:500; border:none;
+            border-radius:10px; cursor:pointer;
+            transition:all 0.18s ease; letter-spacing:0.04em;
         }
 
         #new-game {
-            margin-top: 25px;
-            padding: 10px 30px;
-            font-size: 1rem;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
+            background:var(--btn-grad); color:white;
+            box-shadow:0 4px 20px var(--x-glow);
         }
+        #new-game:hover { transform:translateY(-2px); box-shadow:0 6px 28px var(--x-glow); }
+        #new-game:active { transform:translateY(0); }
 
-        #new-game:hover {
-            background-color: #45a049;
+        .meta {
+            display:flex; flex-direction:column; align-items:center;
+            gap:6px; margin-top:14px;
+            animation: slideUp 0.6s 0.4s cubic-bezier(0.16,1,0.3,1) both;
         }
+        #counter { font-size:0.75rem; color:var(--muted); }
+        .rules-link {
+            font-size:0.75rem; color:var(--muted);
+            text-decoration:none; letter-spacing:0.05em; transition:color 0.2s;
+        }
+        .rules-link:hover { color:var(--text); }
 
-        #counter {
-            margin-top: 10px;
-            font-size: 0.9rem;
-            color: #666;
+        /* Win overlay */
+        .win-flash {
+            position:fixed; inset:0; z-index:100;
+            display:flex; align-items:center; justify-content:center;
+            background:rgba(0,0,0,0.75); backdrop-filter:blur(8px);
+            opacity:0; pointer-events:none; transition:opacity 0.3s;
+        }
+        .win-flash.show { opacity:1; pointer-events:all; }
+
+        .win-card {
+            background:var(--card); border:1px solid var(--border);
+            border-radius:24px; padding:48px 56px; text-align:center;
+            transform:scale(0.85);
+            transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1), background 0.4s, border-color 0.4s;
+        }
+        .win-flash.show .win-card { transform:scale(1); }
+
+        .win-emoji { font-size:3rem; margin-bottom:12px; display:block; }
+        .win-title {
+            font-family:'Bebas Neue',sans-serif;
+            font-size:3rem; letter-spacing:0.1em; margin-bottom:6px;
+        }
+        .win-title.x-wins { color:var(--x); text-shadow:0 0 30px var(--x-glow); }
+        .win-title.o-wins { color:var(--o); text-shadow:0 0 30px var(--o-glow); }
+        .win-title.draw   { color:var(--muted); }
+        .win-sub { color:var(--muted); font-size:0.9rem; margin-bottom:28px; }
+
+        .play-again {
+            background:var(--btn-grad); color:white; border:none;
+            border-radius:12px; padding:12px 32px;
+            font-family:'DM Sans',sans-serif; font-size:0.95rem; font-weight:500;
+            cursor:pointer; transition:all 0.18s ease;
+        }
+        .play-again:hover { transform:translateY(-2px); }
+
+        @keyframes slideDown {
+            from { opacity:0; transform:translateY(-16px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+        @keyframes slideUp {
+            from { opacity:0; transform:translateY(16px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+        @keyframes scaleIn {
+            from { opacity:0; transform:scale(0.92); }
+            to   { opacity:1; transform:scale(1); }
         }
     </style>
 </head>
 <body>
 
-    <h1>Tic Tac Toe</h1>
-    <div id="status">Player X's turn</div>
+<div class="bg-grid"></div>
+
+<div class="win-flash" id="win-flash">
+    <div class="win-card">
+        <span class="win-emoji" id="win-emoji">🎉</span>
+        <div class="win-title" id="win-title">X WINS</div>
+        <div class="win-sub"   id="win-sub">Well played!</div>
+        <button class="play-again" onclick="closeOverlay()">Play Again</button>
+    </div>
+</div>
+
+<div class="wrapper">
+
+    <div class="theme-bar">
+        <span class="theme-label">Theme</span>
+        <button class="theme-btn active" data-t="default"    onclick="setTheme('default')"    title="Blue & Pink"></button>
+        <button class="theme-btn"        data-t="cyberpunk"  onclick="setTheme('cyberpunk')"  title="Cyberpunk"></button>
+        <button class="theme-btn"        data-t="luxury"     onclick="setTheme('luxury')"     title="Luxury Gold"></button>
+        <button class="theme-btn"        data-t="synthwave"  onclick="setTheme('synthwave')"  title="Synthwave"></button>
+        <button class="theme-btn"        data-t="aggressive" onclick="setTheme('aggressive')" title="Red & Black"></button>
+    </div>
+
+    <div class="header">
+        <div class="eyebrow">Two Player Game</div>
+        <h1>Tic Tac Toe</h1>
+    </div>
+
+    <div id="status">
+        <div class="dot"></div>
+        <span id="status-text">Player X's turn</span>
+    </div>
 
     <div id="board">
         <div class="cell" onclick="makeMove(0)"></div>
@@ -108,78 +343,99 @@
         <div class="cell" onclick="makeMove(8)"></div>
     </div>
 
-    <button id="new-game" onclick="newGame()">New Game</button>
-    <div id="counter">Games played: 0</div>
-    <a href="/rules" style="margin-top: 10px; color:#888; font-size:0.85rem; text-decoration:none;">📖 How to Play</a>
+    <div class="bottom-bar">
+        <button class="btn" id="new-game" onclick="newGame()">New Game</button>
+    </div>
 
-    <script>
-        let gamesPlayed = 0;
+    <div class="meta">
+        <div id="counter">Games played: 0</div>
+        <a href="/rules" class="rules-link">📖 How to Play</a>
+    </div>
 
-        function renderBoard(board, placedX, placedO) {
-            const cells = document.querySelectorAll(".cell");
-            cells.forEach((cell, i) => {
-                cell.textContent = board[i];
-                cell.className = "cell";
-                if (board[i] === "X") cell.classList.add("x");
-                if (board[i] === "O") cell.classList.add("o");
-                if (placedX.length === 3 && i === placedX[0]) {
-                    cell.classList.add("warn-x");
-                }
-                if (placedO.length === 3 && i === placedO[0]) {
-                    cell.classList.add("warn-o");
-                }
-            });
+</div>
+
+<script>
+    let gamesPlayed = 0;
+    let lastPlacedIndex = null;
+
+    function setTheme(t) {
+        document.documentElement.setAttribute('data-theme', t);
+        document.querySelectorAll('.theme-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.t === t);
+        });
+        localStorage.setItem('ttt-theme', t);
+    }
+
+    const saved = localStorage.getItem('ttt-theme');
+    if (saved) setTheme(saved);
+
+    function renderBoard(board, placedX, placedO) {
+        document.querySelectorAll(".cell").forEach((cell, i) => {
+            cell.textContent = board[i];
+            cell.className = "cell";
+            if (board[i] === "X") { cell.classList.add("x"); if (i === lastPlacedIndex) cell.classList.add("placed"); }
+            if (board[i] === "O") { cell.classList.add("o"); if (i === lastPlacedIndex) cell.classList.add("placed"); }
+            if (placedX.length === 3 && i === placedX[0]) cell.classList.add("warn-x");
+            if (placedO.length === 3 && i === placedO[0]) cell.classList.add("warn-o");
+        });
+    }
+
+    function setStatus(text, player) {
+        document.getElementById("status-text").textContent = text;
+        document.getElementById("status").className = player === "O" ? "turn-o" : "";
+    }
+
+    function showOverlay(type, winner) {
+        const title = document.getElementById("win-title");
+        const sub   = document.getElementById("win-sub");
+        const emoji = document.getElementById("win-emoji");
+        if (type === "win") {
+            title.textContent = `${winner} WINS`;
+            title.className = `win-title ${winner === "X" ? "x-wins" : "o-wins"}`;
+            sub.textContent = "Well played!"; emoji.textContent = "🎉";
+        } else {
+            title.textContent = "DRAW"; title.className = "win-title draw";
+            sub.textContent = "No winner this time."; emoji.textContent = "🤝";
         }
+        document.getElementById("win-flash").classList.add("show");
+    }
 
-        async function makeMove(index) {
-            const response = await fetch("/move", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ index: index })
-            });
+    function closeOverlay() {
+        document.getElementById("win-flash").classList.remove("show");
+        newGame();
+    }
 
-            const data = await response.json();
-
-            if (data.status === "invalid") return;
-
-            renderBoard(
-                data.board,
-                data.placed_X || [],
-                data.placed_O || []
-            );
-
-            if (data.status === "win") {
-                gamesPlayed++;
-                document.getElementById("counter").textContent = `Games played: ${gamesPlayed}`;
-                setTimeout(() => {
-                    alert(`Player ${data.winner} wins! 🎉`);
-                    renderBoard(["","","","","","","","",""], [], []);
-                    document.getElementById("status").textContent = "Player X's turn";
-                }, 100);
-                return;
-            }
-
-            if (data.status === "draw") {
-                gamesPlayed++;
-                document.getElementById("counter").textContent = `Games played: ${gamesPlayed}`;
-                setTimeout(() => {
-                    alert("It's a draw! 🤝");
-                    renderBoard(["","","","","","","","",""], [], []);
-                    document.getElementById("status").textContent = "Player X's turn";
-                }, 100);
-                return;
-            }
-
-            document.getElementById("status").textContent = `Player ${data.current_player}'s turn`;
+    async function makeMove(index) {
+        const res  = await fetch("/move", {
+            method:"POST", headers:{"Content-Type":"application/json"},
+            body: JSON.stringify({index})
+        });
+        const data = await res.json();
+        if (data.status === "invalid") return;
+        lastPlacedIndex = index;
+        renderBoard(data.board, data.placed_X || [], data.placed_O || []);
+        if (data.status === "win") {
+            gamesPlayed++;
+            document.getElementById("counter").textContent = `Games played: ${gamesPlayed}`;
+            setTimeout(() => showOverlay("win", data.winner), 150);
+            return;
         }
-
-        async function newGame() {
-            const response = await fetch("/reset", { method: "POST" });
-            const data = await response.json();
-            renderBoard(["","","","","","","","",""], [], []);
-            document.getElementById("status").textContent = "Player X's turn";
+        if (data.status === "draw") {
+            gamesPlayed++;
+            document.getElementById("counter").textContent = `Games played: ${gamesPlayed}`;
+            setTimeout(() => showOverlay("draw", null), 150);
+            return;
         }
-    </script>
+        setStatus(`Player ${data.current_player}'s turn`, data.current_player);
+    }
+
+    async function newGame() {
+        await fetch("/reset", {method:"POST"});
+        lastPlacedIndex = null;
+        renderBoard(["","","","","","","","",""], [], []);
+        setStatus("Player X's turn", "X");
+    }
+</script>
 
 </body>
 </html>
