@@ -110,6 +110,7 @@
 
     <button id="new-game" onclick="newGame()">New Game</button>
     <div id="counter">Games played: 0</div>
+    <a href="/rules" style="margin-top: 10px; color:#888; font-size:0.85rem; text-decoration:none;">📖 How to Play</a>
 
     <script>
         let gamesPlayed = 0;
@@ -117,22 +118,13 @@
         function renderBoard(board, placedX, placedO) {
             const cells = document.querySelectorAll(".cell");
             cells.forEach((cell, i) => {
-                // Set text
                 cell.textContent = board[i];
-
-                // Reset classes
                 cell.className = "cell";
-
-                // Color X and O
                 if (board[i] === "X") cell.classList.add("x");
                 if (board[i] === "O") cell.classList.add("o");
-
-                // Warn oldest X piece (about to vanish)
                 if (placedX.length === 3 && i === placedX[0]) {
                     cell.classList.add("warn-x");
                 }
-
-                // Warn oldest O piece (about to vanish)
                 if (placedO.length === 3 && i === placedO[0]) {
                     cell.classList.add("warn-o");
                 }

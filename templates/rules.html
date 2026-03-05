@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How To Play — Tic Tac Toe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0e0e0e;
+            --surface: #161616;
+            --border: #2a2a2a;
+            --x-color: #4f9eff;
+            --o-color: #ff5f5f;
+            --warn-x: #1a2e45;
+            --warn-o: #3a1a1a;
+            --text: #f0f0f0;
+            --muted: #888;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 300;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Background grid lines */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 60px 24px 100px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 70px;
+            animation: fadeDown 0.7s ease both;
+        }
+
+        .header .label {
+            font-size: 0.72rem;
+            letter-spacing: 0.35em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 14px;
+        }
+
+        .header h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(3.5rem, 10vw, 6rem);
+            line-height: 0.9;
+            letter-spacing: 0.04em;
+        }
+
+        .header h1 span.x { color: var(--x-color); }
+        .header h1 span.o { color: var(--o-color); }
+
+        .header .subtitle {
+            margin-top: 20px;
+            color: var(--muted);
+            font-size: 1rem;
+            font-weight: 300;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+            margin: 50px 0;
+        }
+
+        /* Section title */
+        .section-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.6rem;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* Overview cards */
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 50px;
+            animation: fadeUp 0.7s 0.1s ease both;
+        }
+
+        .overview-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px 20px;
+            text-align: center;
+        }
+
+        .overview-card .icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .overview-card .card-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .overview-card .card-value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 0.05em;
+        }
+
+        /* Steps */
+        .steps {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            animation: fadeUp 0.7s 0.2s ease both;
+        }
+
+        .step {
+            display: flex;
+            gap: 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            transition: border-color 0.2s;
+        }
+
+        .step:hover { border-color: #444; }
+
+        .step-number {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5rem;
+            line-height: 1;
+            color: var(--border);
+            min-width: 44px;
+            text-align: center;
+            padding-top: 2px;
+        }
+
+        .step-content h3 {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .step-content p {
+            color: var(--muted);
+            font-size: 0.92rem;
+            line-height: 1.7;
+        }
+
+        /* The vanish rule — special callout */
+        .vanish-rule {
+            background: linear-gradient(135deg, #0f1e30, #1a0f0f);
+            border: 1px solid #2a3a4a;
+            border-radius: 16px;
+            padding: 32px;
+            margin: 50px 0;
+            animation: fadeUp 0.7s 0.3s ease both;
+        }
+
+        .vanish-rule .rule-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .vanish-rule .rule-badge {
+            background: linear-gradient(135deg, var(--x-color), var(--o-color));
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 500;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            padding: 4px 12px;
+            border-radius: 99px;
+        }
+
+        .vanish-rule h2 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.8rem;
+            letter-spacing: 0.05em;
+        }
+
+        .vanish-rule p {
+            color: #aaa;
+            line-height: 1.8;
+            font-size: 0.95rem;
+        }
+
+        .vanish-rule p strong {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        /* Mini board demo */
+        .mini-board-wrap {
+            margin-top: 28px;
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            flex-wrap: wrap;
+        }
+
+        .mini-board {
+            display: grid;
+            grid-template-columns: repeat(3, 52px);
+            grid-template-rows: repeat(3, 52px);
+            gap: 5px;
+        }
+
+        .mini-cell {
+            width: 52px;
+            height: 52px;
+            background: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.4rem;
+        }
+
+        .mini-cell.x { color: var(--x-color); }
+        .mini-cell.o { color: var(--o-color); }
+        .mini-cell.warn { background: var(--warn-x); border-color: var(--x-color); }
+        .mini-cell.empty-warn { background: #1a2a1a; border-color: #2a4a2a; border-style: dashed; }
+
+        .board-caption {
+            font-size: 0.8rem;
+            color: var(--muted);
+            line-height: 1.8;
+            max-width: 260px;
+        }
+
+        .board-caption strong { color: var(--text); }
+
+        /* Win conditions */
+        .win-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+            animation: fadeUp 0.7s 0.4s ease both;
+        }
+
+        .win-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        .win-card .win-icon {
+            font-size: 1.4rem;
+            min-width: 32px;
+            text-align: center;
+        }
+
+        /* Tips */
+        .tips {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            animation: fadeUp 0.7s 0.5s ease both;
+        }
+
+        .tip {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            padding: 16px 18px;
+            background: var(--surface);
+            border-left: 3px solid var(--border);
+            border-radius: 0 8px 8px 0;
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .tip.tip-x { border-left-color: var(--x-color); }
+        .tip.tip-o { border-left-color: var(--o-color); }
+        .tip.tip-n { border-left-color: #888; }
+
+        .tip .tip-icon { font-size: 1.1rem; min-width: 22px; }
+
+        /* Play button */
+        .play-wrap {
+            text-align: center;
+            margin-top: 60px;
+            animation: fadeUp 0.7s 0.6s ease both;
+        }
+
+        .play-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--x-color), #2266cc);
+            color: white;
+            text-decoration: none;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.4rem;
+            letter-spacing: 0.15em;
+            padding: 16px 52px;
+            border-radius: 99px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 0 40px rgba(79, 158, 255, 0.2);
+        }
+
+        .play-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 60px rgba(79, 158, 255, 0.35);
+        }
+
+        /* Animations */
+        @keyframes fadeDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <div class="label">Game Rules</div>
+        <h1>TIC <span class="x">TAC</span> <span class="o">TOE</span></h1>
+        <p class="subtitle">A classic game — with a twist that changes everything.</p>
+    </div>
+
+    <!-- Overview -->
+    <div class="section-title">The Basics</div>
+    <div class="overview-grid">
+        <div class="overview-card">
+            <div class="icon">👥</div>
+            <div class="card-label">Players</div>
+            <div class="card-value">2</div>
+        </div>
+        <div class="overview-card">
+            <div class="icon">🎯</div>
+            <div class="card-label">Goal</div>
+            <div class="card-value">3 in a Row</div>
+        </div>
+        <div class="overview-card">
+            <div class="icon">♾️</div>
+            <div class="card-label">Max Pieces</div>
+            <div class="card-value">3 at a time</div>
+        </div>
+        <div class="overview-card">
+            <div class="icon">⚡</div>
+            <div class="card-label">First Move</div>
+            <div class="card-value">Player X</div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- How to play steps -->
+    <div class="section-title">How To Play</div>
+    <div class="steps">
+        <div class="step">
+            <div class="step-number">01</div>
+            <div class="step-content">
+                <h3>Take turns placing your symbol</h3>
+                <p>Player X always goes first. Players alternate turns, clicking any empty cell on the 3×3 board to place their symbol — X or O.</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-number">02</div>
+            <div class="step-content">
+                <h3>Win by getting 3 in a row</h3>
+                <p>Get three of your symbols in a row — horizontally, vertically, or diagonally — and you win. Simple as the original game.</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-number">03</div>
+            <div class="step-content">
+                <h3>Watch the highlighted piece</h3>
+                <p>When you have 3 pieces on the board, your oldest piece gets a coloured highlight — <strong style="color:var(--x-color)">blue for X</strong>, <strong style="color:var(--o-color)">red for O</strong>. This is a warning: it will vanish on your next move.</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-number">04</div>
+            <div class="step-content">
+                <h3>The 4th piece makes the 1st vanish</h3>
+                <p>You can never have more than 3 pieces on the board. When you place your 4th piece, your very first piece disappears — freeing that cell for anyone to use.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- The Vanish Rule callout -->
+    <div class="vanish-rule">
+        <div class="rule-header">
+            <div class="rule-badge">⭐ Core Rule</div>
+            <h2>The Vanish Rule</h2>
+        </div>
+        <p>
+            Each player can have <strong>at most 3 symbols on the board at once</strong>. 
+            When you place your <strong>4th symbol</strong>, your <strong>oldest symbol is removed first</strong> — 
+            then the board is checked for a winner. This means the game never gets stuck, 
+            and strategy keeps shifting until the very last move.
+        </p>
+
+        <div class="mini-board-wrap">
+            <div>
+                <div class="mini-board">
+                    <div class="mini-cell warn x">X</div>
+                    <div class="mini-cell"></div>
+                    <div class="mini-cell o">O</div>
+                    <div class="mini-cell"></div>
+                    <div class="mini-cell x">X</div>
+                    <div class="mini-cell o">O</div>
+                    <div class="mini-cell"></div>
+                    <div class="mini-cell x">X</div>
+                    <div class="mini-cell"></div>
+                </div>
+                <p style="font-size:0.72rem;color:var(--muted);margin-top:8px;text-align:center;">X has 3 pieces — top-left highlighted</p>
+            </div>
+
+            <div style="color:var(--muted);font-size:1.5rem;">→</div>
+
+            <div>
+                <div class="mini-board">
+                    <div class="mini-cell empty-warn"></div>
+                    <div class="mini-cell"></div>
+                    <div class="mini-cell o">O</div>
+                    <div class="mini-cell"></div>
+                    <div class="mini-cell x">X</div>
+                    <div class="mini-cell o">O</div>
+                    <div class="mini-cell x">X</div>
+                    <div class="mini-cell x">X</div>
+                    <div class="mini-cell x">X</div>
+                </div>
+                <p style="font-size:0.72rem;color:var(--muted);margin-top:8px;text-align:center;">X places 4th → top-left vanishes first</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Win conditions -->
+    <div class="section-title">Ways To Win</div>
+    <div class="win-grid" style="margin-bottom:50px;">
+        <div class="win-card">
+            <div class="win-icon">➡️</div>
+            <div>Any of the <strong>3 horizontal rows</strong></div>
+        </div>
+        <div class="win-card">
+            <div class="win-icon">⬇️</div>
+            <div>Any of the <strong>3 vertical columns</strong></div>
+        </div>
+        <div class="win-card">
+            <div class="win-icon">↘️</div>
+            <div><strong>Diagonal</strong> top-left to bottom-right</div>
+        </div>
+        <div class="win-card">
+            <div class="win-icon">↙️</div>
+            <div><strong>Diagonal</strong> top-right to bottom-left</div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Tips -->
+    <div class="section-title">Tips & Strategy</div>
+    <div class="tips">
+        <div class="tip tip-x">
+            <div class="tip-icon">💡</div>
+            <div>The <strong style="color:var(--text)">highlighted piece</strong> is your early warning system — plan your next move before it vanishes to avoid losing a good position.</div>
+        </div>
+        <div class="tip tip-o">
+            <div class="tip-icon">🎯</div>
+            <div>The <strong style="color:var(--text)">vanished cell</strong> is freed for anyone to use — watch your opponent's oldest piece too, it might open up a winning cell for you.</div>
+        </div>
+        <div class="tip tip-n">
+            <div class="tip-icon">⚠️</div>
+            <div>On your <strong style="color:var(--text)">4th move onwards</strong>, the vanish always happens before the win check — so you can never win with 4 pieces on the board at once.</div>
+        </div>
+        <div class="tip tip-x">
+            <div class="tip-icon">🔄</div>
+            <div>The game <strong style="color:var(--text)">never truly gets stuck</strong> — because pieces keep disappearing, a winning move is always just around the corner.</div>
+        </div>
+    </div>
+
+    <!-- Play button -->
+    <div class="play-wrap">
+        <a href="/" class="play-btn">▶ &nbsp; Play Now</a>
+    </div>
+
+</div>
+</body>
+</html>

@@ -151,6 +151,10 @@ def reset():
     reset_game()
     return jsonify({"status": "reset", "board": board, "current_player": current_player})
 
+@app.route("/rules")
+def rules():
+    return render_template("rules.html")
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
