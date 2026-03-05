@@ -255,16 +255,45 @@
         #new-game:active { transform:translateY(0); }
 
         .meta {
-            display:flex; flex-direction:column; align-items:center;
-            gap:6px; margin-top:14px;
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 16px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 99px;
+            padding: 10px 20px;
+            z-index: 100;
+            transition: background 0.4s, border-color 0.4s;
             animation: slideUp 0.6s 0.4s cubic-bezier(0.16,1,0.3,1) both;
         }
-        #counter { font-size:0.75rem; color:var(--muted); }
-        .rules-link {
-            font-size:0.75rem; color:var(--muted);
-            text-decoration:none; letter-spacing:0.05em; transition:color 0.2s;
+        #counter {
+            font-size: 0.75rem;
+            color: var(--muted);
+            letter-spacing: 0.05em;
+            white-space: nowrap;
         }
-        .rules-link:hover { color:var(--text); }
+        .rules-link {
+            font-size: 0.8rem;
+            color: var(--muted);
+            text-decoration: none;
+            letter-spacing: 0.05em;
+            transition: color 0.2s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .rules-link:hover { color: var(--text); }
+        .meta-divider {
+            width: 1px;
+            height: 14px;
+            background: var(--border);
+        }
 
         /* Win overlay */
         .win-flash {
@@ -303,6 +332,10 @@
 
         @keyframes slideLeft {
             from { opacity:0; transform: translateY(-50%) translateX(20px); }
+            to   { opacity:1; transform: translateY(-50%) translateX(0); }
+        }
+        @keyframes slideRight {
+            from { opacity:0; transform: translateY(-50%) translateX(-20px); }
             to   { opacity:1; transform: translateY(-50%) translateX(0); }
         }
         @keyframes slideDown {
@@ -375,6 +408,7 @@
 
     <div class="meta">
         <div id="counter">Games played: 0</div>
+        <div class="meta-divider"></div>
         <a href="/rules" class="rules-link">📖 How to Play</a>
     </div>
 
